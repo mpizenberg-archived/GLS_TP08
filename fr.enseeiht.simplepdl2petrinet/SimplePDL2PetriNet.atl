@@ -1,0 +1,78 @@
+module SimplePDL2PetriNet;
+create OUT: petrinet from  IN: simplepdl;
+
+-- Obtenir le processus qui contient ce process element.
+-- Remarque: Ce helper ne serait pas utile si une référence opposite
+-- avait été placée entre Process et ProcessElement
+helper context simplepdl!ProcessElement
+def: getProcess(): simplepdl!Process =
+	simplepdl!Process.allInstances()
+		->select(p | p.processElements->includes(self))
+		->asSequence()->first();
+
+-- Traduire un Process en un PetriNet de même nom
+rule Process2PetriNet {
+	from p: simplepdl!Process
+	to pn: petrinet!PetriNet (name <- p.name)
+}
+
+-- Traduire une WorkDefinition en un motif sur le réseau de Petri
+rule WorkDefinition2PetriNet {
+	from wd: simplepdl!WorkDefinition
+	to
+		-- PLACES d'une WorkDefinition
+		p_notStarted: petrinet!Place(
+				name <- wd.name + '_notStarted',
+				marking <- 1,
+				petriNet <- wd.getProcess()),
+		p_started: petrinet!Place(
+				name <- wd.name + '_started',
+				marking <- 0,
+				petriNet <- wd.getProcess()),
+		p_inProgress: petrinet!Place(
+				name <- wd.name + '_inProgress',
+				marking <- 0,
+				petriNet <- wd.getProcess()),
+		p_finished: petrinet!Place(
+				name <- wd.name + '_finished',
+				marking <- 0,
+				petriNet <- wd.getProcess()),
+		-- TRANSITIONS
+		t_start: petriNet!Transition(
+				petriNet <- wd.getProcess(),
+				name <- wd.name + '_start'),
+		t_finish: petriNet!Transition(
+				petriNet <- wd.getProcess(),
+				name <- wd.name + '_finish'),
+		-- ARCS
+		a_notStartedToStart: petriNet!Arc(
+				petriNet <- wd.getProcess(),
+				readOnly <- false,
+				multiplicity <- 1,
+				predecessor <- p_notStarted,
+				successor <- t_start),
+		a_startToStarted: petriNet!Arc(
+				petriNet <- wd.getProcess(),
+				readOnly <- false,
+				multiplicity <- 1,
+				predecessor <- t_start,
+				successor <- p_started),
+		a_startToInProgress: petriNet!Arc(
+				petriNet <- wd.getProcess(),
+				readOnly <- false,
+				multiplicity <- 1,
+				predecessor <- t_start,
+				successor <- p_inProgress),
+		a_inProgressToFinish: petriNet!Arc(
+				petriNet <- wd.getProcess(),
+				readOnly <- false,
+				multiplicity <- 1,
+				predecessor <- p_inProgress,
+				successor <- t_finish),
+		a_finishTofinished: petriNet!Arc(
+				petriNet <- wd.getProcess(),
+				readOnly <- false,
+				multiplicity <- 1,
+				predecessor <- t_finish,
+				successor <- p_finished)
+}
