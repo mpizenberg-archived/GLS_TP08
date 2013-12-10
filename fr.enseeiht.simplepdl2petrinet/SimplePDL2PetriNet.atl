@@ -38,38 +38,38 @@ rule WorkDefinition2PetriNet {
 				marking <- 0,
 				petriNet <- wd.getProcess()),
 		-- TRANSITIONS
-		t_start: petriNet!Transition(
+		t_start: petrinet!Transition(
 				petriNet <- wd.getProcess(),
 				name <- wd.name + '_start'),
-		t_finish: petriNet!Transition(
+		t_finish: petrinet!Transition(
 				petriNet <- wd.getProcess(),
 				name <- wd.name + '_finish'),
 		-- ARCS
-		a_notStartedToStart: petriNet!Arc(
+		a_notStartedToStart: petrinet!Arc(
 				petriNet <- wd.getProcess(),
 				readOnly <- false,
 				multiplicity <- 1,
 				predecessor <- p_notStarted,
 				successor <- t_start),
-		a_startToStarted: petriNet!Arc(
+		a_startToStarted: petrinet!Arc(
 				petriNet <- wd.getProcess(),
 				readOnly <- false,
 				multiplicity <- 1,
 				predecessor <- t_start,
 				successor <- p_started),
-		a_startToInProgress: petriNet!Arc(
+		a_startToInProgress: petrinet!Arc(
 				petriNet <- wd.getProcess(),
 				readOnly <- false,
 				multiplicity <- 1,
 				predecessor <- t_start,
 				successor <- p_inProgress),
-		a_inProgressToFinish: petriNet!Arc(
+		a_inProgressToFinish: petrinet!Arc(
 				petriNet <- wd.getProcess(),
 				readOnly <- false,
 				multiplicity <- 1,
 				predecessor <- p_inProgress,
 				successor <- t_finish),
-		a_finishTofinished: petriNet!Arc(
+		a_finishTofinished: petrinet!Arc(
 				petriNet <- wd.getProcess(),
 				readOnly <- false,
 				multiplicity <- 1,
@@ -81,7 +81,7 @@ rule WorkDefinition2PetriNet {
 rule WorkSequence2PetriNet {
 	from ws: simplepdl!WorkSequence
 	to
-		a_ws: petriNet!Arc(
+		a_ws: petrinet!Arc(
 				petriNet <- ws.getProcess(),
 				readOnly <- true,
 				multiplicity <- 1,
@@ -90,7 +90,7 @@ rule WorkSequence2PetriNet {
 						then 'p_finished'
 						else 'p_started'
 					endif),
-				successor <- thisModule.resolveTemp(ws.predecessor,
+				successor <- thisModule.resolveTemp(ws.successor,
 					if((ws.linkType = #finishToStart) or (ws.linkType = #startToStart))
 						then 't_start'
 						else 't_finish'
