@@ -76,3 +76,24 @@ rule WorkDefinition2PetriNet {
 				predecessor <- t_finish,
 				successor <- p_finished)
 }
+
+-- Traduire une WorkSequence en un motif sur le réseau de Petri
+rule WorkSequence2PetriNet {
+	from ws: simplepdl!WorkSequence
+	to
+		a_ws: petriNet!Arc(
+				petriNet <- ws.getProcess(),
+				readOnly <- true,
+				multiplicity <- 1,
+				predecessor <- thisModule.resolveTemp(ws.predecessor,
+					if((ws.linkType = #finishToStart) or (ws.linkType = #finishToFinish))
+						then 'p_finished'
+						else 'p_started'
+					endif),
+				successor <- thisModule.resolveTemp(ws.predecessor,
+					if((ws.linkType = #finishToStart) or (ws.linkType = #startToStart))
+						then 't_start'
+						else 't_finish'
+					endif)
+				)
+}
